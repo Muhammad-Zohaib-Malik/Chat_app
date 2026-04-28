@@ -1,0 +1,35 @@
+
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import { connectDatabase } from "./config/db.js";
+import userRoutes from "./src/routes/user.route.js";
+
+const app = express();
+const port = process.env.PORT || 4000;
+
+// Middleware to parse JSON
+app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
+app.use("/api/users", userRoutes);
+
+// Connect to Database and start server
+const startServer = async () => {
+  try {
+    await connectDatabase();
+    app.listen(port, () => {
+      console.log(`Server is running at http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
