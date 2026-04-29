@@ -19,3 +19,7 @@ export const refreshToken = () => {
 export const getProfile = () => {
   return api.get("/users/profile");
 };
+
+export const getAllUsers = () => {
+  return api.get("/users/all");
+};

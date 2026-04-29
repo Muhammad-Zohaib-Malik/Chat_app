@@ -24,7 +24,9 @@ export const register = async (req, res) => {
     );
 
     if (existingUser.rows.length > 0) {
-      res.status(400).json({ message: "Email or username is already registered" });
+      res
+        .status(400)
+        .json({ message: "Email or username is already registered" });
       return;
     }
 
@@ -233,7 +235,7 @@ export const getProfile = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, username, email, created_at, updated_at
+      `SELECT id, username, email
        FROM users
        WHERE id = $1`,
       [req.user.id],
@@ -247,6 +249,23 @@ export const getProfile = async (req, res) => {
     res.json({ profile: result.rows[0] });
   } catch (error) {
     console.error("Profile Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, username, email
+       FROM users
+       WHERE id != $1
+       ORDER BY username ASC`,
+      [req.user.id],
+    );
+
+    res.json({ users: result.rows });
+  } catch (error) {
+    console.error("Get All Users Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

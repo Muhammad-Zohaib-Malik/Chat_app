@@ -4,7 +4,8 @@ import {
   login,
   refresh,
   logout,
-  getProfile
+  getProfile,
+  getAllUsers,
 } from "../controllers/user.controller.js";
 import { verifyAccessToken } from "../middleware/auth.middleware.js";
 
@@ -15,7 +16,8 @@ router.post("/login", login);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
 
-// Protected route
+// Protected routes
 router.get("/profile", verifyAccessToken, getProfile);
+router.get("/all", verifyAccessToken, getAllUsers);
 
 export default router;

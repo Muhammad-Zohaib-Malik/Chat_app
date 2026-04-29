@@ -55,126 +55,98 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-1">
-          <h1 className="text-3xl font-bold text-gray-800">
-            {isLogin ? "Welcome Back" : "Create Account"}
-          </h1>
-          <p className="text-sm text-gray-500">
-            {isLogin
-              ? "Sign in to continue to ChatApp"
-              : "Register a new account"}
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-slate-100">
+        <div className="text-center">
+          <div className="mx-auto h-16 w-16 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+          </div>
+          <h2 className="text-3xl font-extrabold text-slate-900">
+            {isLogin ? "Sign in to your account" : "Create a new account"}
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            {isLogin ? "Welcome back! Please enter your details." : "Join our community today."}
           </p>
         </div>
 
-        {/* Toggle Tabs */}
-        <div className="flex bg-gray-100 rounded-xl p-1">
+        <div className="flex bg-slate-100 p-1 rounded-xl">
           <button
-            type="button"
             onClick={() => !isLogin && toggleMode()}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 cursor-pointer ${
-              isLogin
-                ? "bg-emerald-500 text-white shadow-md"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${isLogin ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
             Login
           </button>
           <button
-            type="button"
             onClick={() => isLogin && toggleMode()}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 cursor-pointer ${
-              !isLogin
-                ? "bg-emerald-500 text-white shadow-md"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${!isLogin ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
             Register
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username — register only */}
-          {!isLogin && (
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                <input
+                  name="username"
+                  type="text"
+                  required
+                  value={formData.username}
+                  onChange={handleChange}
+                  className="appearance-none relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-green-500 focus:border-green-500 transition-all"
+                  placeholder="johndoe"
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Email address</label>
               <input
-                id="username"
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
+                name="email"
+                type="email"
                 required
-                placeholder="johndoe"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200"
+                value={formData.email}
+                onChange={handleChange}
+                className="appearance-none relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-green-500 focus:border-green-500 transition-all"
+                placeholder="you@example.com"
               />
             </div>
-          )}
-
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder="you@example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200"
-            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input
+                name="password"
+                type="password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                className="appearance-none relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-green-500 focus:border-green-500 transition-all"
+                placeholder="••••••••"
+              />
+            </div>
           </div>
 
-          {/* Password */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="••••••••"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200"
-            />
+          <div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all disabled:opacity-70"
+            >
+              {submitting ? "Processing..." : isLogin ? "Sign In" : "Register Now"}
+            </button>
           </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-3 mt-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          >
-            {submitting
-              ? "Please wait…"
-              : isLogin
-                ? "Sign In"
-                : "Create Account"}
-          </button>
         </form>
 
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-500">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+        <div className="text-center">
           <button
-            type="button"
             onClick={toggleMode}
-            className="text-emerald-600 hover:text-emerald-700 font-medium transition-colors cursor-pointer"
+            className="text-sm font-medium text-green-600 hover:text-green-500 transition-colors"
           >
-            {isLogin ? "Register" : "Sign In"}
+            {isLogin ? "Need an account? Register" : "Already have an account? Sign in"}
           </button>
-        </p>
+        </div>
       </div>
     </div>
   );
