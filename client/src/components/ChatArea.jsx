@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect } from "react";
+import { getMessages, sendMessage } from "../api/messages";
+import { useAuth } from "../context/AuthContext";
 
 const ChatArea = ({ selectedUser }) => {
+  const { user } = useAuth();
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -14,8 +18,33 @@ const ChatArea = ({ selectedUser }) => {
   }, [messages]);
 
   useEffect(() => {
-    setMessages([]);
-  }, [selectedUser]);
+    const fetchMessages = async () => {
+      if (!selectedUser) return;
+      setLoading(true);
+      try {
+        const data = await getMessages(selectedUser.id);
+
+        console.log("data", data);
+        // Map backend messages to UI format
+        const formattedMessages = data.map((msg, index) => ({
+          id: index, // Backend doesn't provide unique ID for individual messages in the JSONB array yet
+          text: msg.message,
+          sender: msg.senderId === user.id ? "me" : "them",
+          time: new Date(msg.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+        setMessages(formattedMessages);
+      } catch (err) {
+        console.error("Failed to fetch messages:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, [selectedUser, user.id]);
 
   if (!selectedUser) {
     return (
@@ -45,19 +74,31 @@ const ChatArea = ({ selectedUser }) => {
     );
   }
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!inputText.trim()) return;
 
-    const newMessage = {
-      id: Date.now(),
-      text: inputText,
-      sender: "me",
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+    const messageContent = inputText.trim();
+    setInputText(""); // Clear input immediately for better UX
 
-    setMessages([...messages, newMessage]);
-    setInputText("");
+    try {
+      const response = await sendMessage(selectedUser.id, messageContent);
+
+      const newMessage = {
+        id: Date.now(),
+        text: response.data.message,
+        sender: "me",
+        time: new Date(response.data.timestamp).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+
+      setMessages((prev) => [...prev, newMessage]);
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      // Optionally show a toast error here
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -129,42 +170,76 @@ const ChatArea = ({ selectedUser }) => {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50 flex flex-col">
-        {/* Simple start message */}
-        <div className="flex justify-center py-4">
-          <span className="px-4 py-1.5 bg-slate-100 text-slate-500 text-[11px] font-bold rounded-full uppercase tracking-widest border border-slate-200 shadow-sm">
-            This is the start of your conversation
-          </span>
-        </div>
-
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex flex-col ${msg.sender === "me" ? "items-end" : "items-start"}`}
-          >
-            <div
-              className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${
-                msg.sender === "me"
-                  ? "bg-green-500 text-white rounded-br-none"
-                  : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
-              }`}
-            >
-              {msg.text}
-            </div>
-            <span className="text-[10px] font-bold text-slate-400 mt-1 px-1 uppercase tracking-wider">
-              {msg.time}
-            </span>
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className={`flex flex-col ${i % 2 === 0 ? "items-end" : "items-start"}`}
+              >
+                <div className="w-1/3 h-10 bg-slate-200 animate-pulse rounded-2xl"></div>
+              </div>
+            ))}
           </div>
-        ))}
-        <div ref={messagesEndRef} />
+        ) : messages.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-3">
+            <div className="p-4 bg-white rounded-full shadow-sm border border-slate-100">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium">No messages yet. Say hi!</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-center py-4">
+              <span className="px-4 py-1.5 bg-slate-100 text-slate-500 text-[11px] font-bold rounded-full uppercase tracking-widest border border-slate-200 shadow-sm">
+                This is the start of your conversation
+              </span>
+            </div>
+
+            {messages.map((msg, index) => (
+              <div
+                key={msg.id || index}
+                className={`flex flex-col ${msg.sender === "me" ? "items-end" : "items-start"}`}
+              >
+                <div
+                  className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${
+                    msg.sender === "me"
+                      ? "bg-green-500 text-white rounded-br-none"
+                      : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 mt-1 px-1 uppercase tracking-wider">
+                  {msg.time}
+                </span>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </>
+        )}
       </div>
 
       {/* Input Area */}
       <div className="p-4 bg-white border-t border-slate-100">
-        <form 
+        <form
           onSubmit={handleSendMessage}
           className="max-w-4xl mx-auto relative flex items-center gap-2 px-2 py-2 bg-slate-50 border border-slate-100 rounded-2xl focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-500 transition-all"
         >
-          <button type="button" className="p-2 text-slate-400 hover:text-green-500 transition-colors">
+          <button
+            type="button"
+            className="p-2 text-slate-400 hover:text-green-500 transition-colors"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="22"
@@ -187,7 +262,7 @@ const ChatArea = ({ selectedUser }) => {
             placeholder="Type a message..."
             className="flex-1 bg-transparent border-none py-2 px-1 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0"
           />
-          <button 
+          <button
             type="submit"
             className="w-10 h-10 bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl shadow-lg shadow-green-500/30 transition-all hover:scale-105 active:scale-95 shrink-0"
           >

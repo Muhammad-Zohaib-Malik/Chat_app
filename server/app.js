@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import userRoutes from "./src/routes/user.route.js";
+import messageRoutes from "./src/routes/message.route.js";
 import { connectDatabase } from "./src/config/db.js";
 
 const app = express();
@@ -17,7 +18,16 @@ app.use(
     credentials: true,
   }),
 );
+
+
+
 app.use("/api/users", userRoutes);
+app.use("/api/messages", messageRoutes);
+
+app.get("/",(req,res)=>{
+    res.send("Health Check")
+})
+
 
 // Connect to Database and start server
 const startServer = async () => {
