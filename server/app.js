@@ -2,8 +2,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { connectDatabase } from "./config/db.js";
 import userRoutes from "./src/routes/user.route.js";
+import { connectDatabase } from "./src/config/db.js";
 
 const app = express();
 const port = process.env.PORT || 4000;

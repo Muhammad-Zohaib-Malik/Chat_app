@@ -15,7 +15,7 @@ export const verifyAccessToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const result = await pool.query(
-      "SELECT id, username, email, role FROM users WHERE id = $1",
+      "SELECT id, username, email FROM users WHERE id = $1",
       [decoded.id],
     );
 
