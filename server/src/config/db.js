@@ -31,6 +31,36 @@ export const connectDatabase = async () => {
       )
     `);
 
+    await client.query(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id SERIAL PRIMARY KEY,
+          sender_id INTEGER NOT NULL,
+          receiver_id INTEGER NOT NULL,
+          message TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+          CONSTRAINT fk_sender
+            FOREIGN KEY(sender_id) 
+            REFERENCES users(id)
+            ON DELETE CASCADE,
+
+          CONSTRAINT fk_receiver
+            FOREIGN KEY(receiver_id) 
+            REFERENCES users(id)
+            ON DELETE CASCADE 
+  )
+`);
+
+    await client.query(`
+        CREATE TABLE IF NOT EXISTS conversations (
+          id SERIAL PRIMARY KEY,
+          participants INTEGER[] NOT NULL,
+          messages JSONB DEFAULT '[]',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+`);
+
     console.log("🟢 Tables created/verified successfully");
   } catch (err) {
     console.error("🔴 Database error:", err.message);
