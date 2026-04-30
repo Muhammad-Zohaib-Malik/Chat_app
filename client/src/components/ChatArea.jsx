@@ -12,8 +12,6 @@ const ChatArea = ({ selectedUser }) => {
   const messagesEndRef = useRef(null);
 
 
-
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -29,7 +27,6 @@ const ChatArea = ({ selectedUser }) => {
       try {
         const data = await getMessages(selectedUser.id);
 
-        console.log("data", data);
         // Map backend messages to UI format
         const formattedMessages = data.map((msg, index) => ({
           id: index, // Backend doesn't provide unique ID for individual messages in the JSONB array yet
@@ -244,8 +241,8 @@ const ChatArea = ({ selectedUser }) => {
               >
                 <div
                   className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${msg.sender === "me"
-                      ? "bg-green-500 text-white rounded-br-none"
-                      : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
+                    ? "bg-green-500 text-white rounded-br-none"
+                    : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
                     }`}
                 >
                   {msg.text}
