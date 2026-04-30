@@ -1,13 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { getMessages, sendMessage } from "../api/messages";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 
 const ChatArea = ({ selectedUser }) => {
   const { user } = useAuth();
+  const { socket } = useSocket();
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+
+
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -45,6 +50,32 @@ const ChatArea = ({ selectedUser }) => {
 
     fetchMessages();
   }, [selectedUser, user.id]);
+
+  useEffect(() => {
+    if (!socket || !selectedUser) return;
+
+    const handleNewMessage = (newMessage) => {
+      // Only add the message if it's from the currently selected user
+      if (newMessage.senderId === selectedUser.id) {
+        const formattedMessage = {
+          id: Date.now(),
+          text: newMessage.message,
+          sender: "them",
+          time: new Date(newMessage.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        setMessages((prev) => [...prev, formattedMessage]);
+      }
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [socket, selectedUser]);
 
   if (!selectedUser) {
     return (
@@ -212,11 +243,10 @@ const ChatArea = ({ selectedUser }) => {
                 className={`flex flex-col ${msg.sender === "me" ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${
-                    msg.sender === "me"
+                  className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${msg.sender === "me"
                       ? "bg-green-500 text-white rounded-br-none"
                       : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
-                  }`}
+                    }`}
                 >
                   {msg.text}
                 </div>
