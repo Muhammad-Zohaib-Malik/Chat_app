@@ -5,8 +5,8 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./src/routes/user.route.js";
 import messageRoutes from "./src/routes/message.route.js";
 import { connectDatabase } from "./src/config/db.js";
+import { app, server } from "./src/lib/socket.js";
 
-const app = express();
 const port = process.env.PORT || 4000;
 
 // Middleware to parse JSON
@@ -24,8 +24,8 @@ app.use(
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 
-app.get("/",(req,res)=>{
-    res.send("Health Check")
+app.get("/", (req, res) => {
+  res.send("Health Check")
 })
 
 
@@ -33,7 +33,7 @@ app.get("/",(req,res)=>{
 const startServer = async () => {
   try {
     await connectDatabase();
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
     });
   } catch (error) {

@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -20,7 +21,7 @@ export const sendMessage = async (req, res) => {
        AND array_length(participants, 1) = 2`,
       [senderId, receiverId],
     );
-    console.log("Conversation result:", conversationResult.rows);
+
     let conversationId;
     const newMessage = {
       senderId,
@@ -54,6 +55,12 @@ export const sendMessage = async (req, res) => {
       [senderId, receiverId, message],
     );
 
+    // 3. Socket implementation for real-time
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
     return res.status(201).json({
       message: "Message sent successfully",
       data: newMessage,
@@ -81,7 +88,6 @@ export const getMessages = async (req, res) => {
       [senderId, userToChatId],
     );
 
-    console.log(result);
 
     if (result.rows.length === 0) {
       return res.status(200).json([]);
