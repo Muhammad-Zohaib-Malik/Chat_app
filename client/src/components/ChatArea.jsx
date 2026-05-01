@@ -119,7 +119,7 @@ const ChatArea = ({ selectedUser }) => {
   return (
     <div className="flex-1 flex flex-col bg-white h-full overflow-hidden">
       {/* Chat Header */}
-      <div className="h-[72px] px-6 flex items-center justify-between border-b border-slate-100">
+      <div className="h-18 px-6 flex items-center justify-between border-b border-slate-100">
         <div className="flex items-center gap-4">
           <div className="w-11 h-11 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center font-bold text-sm shadow-sm">
             {getInitials(selectedUser.username)}
