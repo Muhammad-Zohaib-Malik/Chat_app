@@ -36,7 +36,8 @@ export const connectDatabase = async () => {
           id SERIAL PRIMARY KEY,
           sender_id INTEGER NOT NULL,
           receiver_id INTEGER NOT NULL,
-          message TEXT NOT NULL,
+          message TEXT,
+          attachment TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
           CONSTRAINT fk_sender
@@ -50,6 +51,11 @@ export const connectDatabase = async () => {
             ON DELETE CASCADE 
   )
 `);
+
+    // Add column if it doesn't exist (for existing tables)
+    await client.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS attachment TEXT`);
+    await client.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_name TEXT`);
+    await client.query(`ALTER TABLE messages ALTER COLUMN message DROP NOT NULL`);
 
     await client.query(`
         CREATE TABLE IF NOT EXISTS conversations (
