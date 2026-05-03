@@ -3,7 +3,7 @@ import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const sendMessage = async (req, res) => {
   try {
-    const { message = "", attachment, fileName } = req.body;
+    const { message, attachment, fileName } = req.body;
     const receiverId = parseInt(req.params.receiverId);
     const senderId = req.user.id;
 
@@ -61,6 +61,8 @@ export const sendMessage = async (req, res) => {
 
     // 3. Socket implementation for real-time
     const receiverSocketId = getReceiverSocketId(receiverId);
+    console.log("receiverId",receiverId)
+    console.log("receiverSocketId",receiverSocketId)
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
