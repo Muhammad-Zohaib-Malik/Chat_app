@@ -3,14 +3,16 @@ import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const sendMessage = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message = "", attachment, fileName } = req.body;
     const receiverId = parseInt(req.params.receiverId);
     const senderId = req.user.id;
 
-    if (!message || !receiverId || !senderId) {
+    if ((!message && !attachment) || !receiverId || !senderId) {
       return res
         .status(400)
-        .json({ error: "Message and receiverId, senderId are required" });
+        .json({
+          error: "Message or attachment, and receiverId, senderId are required",
+        });
     }
 
     // 1. Check if a conversation already exists between these two participants
@@ -27,6 +29,8 @@ export const sendMessage = async (req, res) => {
       senderId,
       receiverId,
       message,
+      attachment,
+      fileName,
       timestamp: new Date().toISOString(),
     };
 
@@ -51,8 +55,8 @@ export const sendMessage = async (req, res) => {
 
     // 2. Also insert into the messages table for detailed tracking/querying
     await pool.query(
-      "INSERT INTO messages (sender_id, receiver_id, message) VALUES ($1, $2, $3)",
-      [senderId, receiverId, message],
+      "INSERT INTO messages (sender_id, receiver_id, message, attachment, file_name) VALUES ($1, $2, $3, $4, $5)",
+      [senderId, receiverId, message, attachment, fileName],
     );
 
     // 3. Socket implementation for real-time
@@ -87,7 +91,6 @@ export const getMessages = async (req, res) => {
        AND array_length(participants, 1) = 2`,
       [senderId, userToChatId],
     );
-
 
     if (result.rows.length === 0) {
       return res.status(200).json([]);

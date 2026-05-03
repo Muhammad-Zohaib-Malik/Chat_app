@@ -1,21 +1,11 @@
-import axiosInstance from "./axios";
+import api from "./axios";
 
-export const getMessages = async (receiverId) => {
-  try {
-    const response = await axiosInstance.get(`/messages/${receiverId}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+export const getMessages = async (userId) => {
+  const response = await api.get(`/messages/${userId}`);
+  return response.data;
 };
 
-export const sendMessage = async (receiverId, message) => {
-  try {
-    const response = await axiosInstance.post(`/messages/send/${receiverId}`, {
-      message,
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+export const sendMessage = async (userId, message, attachment, fileName) => {
+  const response = await api.post(`/messages/send/${userId}`, { message, attachment, fileName });
+  return response.data;
 };

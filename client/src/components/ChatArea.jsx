@@ -9,7 +9,26 @@ const ChatArea = ({ selectedUser }) => {
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [attachment, setAttachment] = useState(null);
+  const [attachmentPreview, setAttachmentPreview] = useState(null);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const renderAttachment = (att, fileName) => {
+    if (!att) return null;
+    if (att.startsWith("data:image")) {
+      return <img src={att} alt="attachment" className="max-w-[200px] sm:max-w-[250px] rounded-xl mt-2" />;
+    }
+    if (att.startsWith("data:video")) {
+      return <video src={att} controls className="max-w-[200px] sm:max-w-[250px] rounded-xl mt-2" />;
+    }
+    return (
+      <a href={att} download={fileName || "document"} className="flex items-center gap-2 mt-2 bg-white/20 p-2 rounded-lg text-inherit hover:bg-white/30 transition-colors border border-inherit border-opacity-30">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+        <span className="text-sm font-semibold">{fileName || "Download File"}</span>
+      </a>
+    );
+  };
 
 
   const scrollToBottom = () => {
@@ -31,6 +50,8 @@ const ChatArea = ({ selectedUser }) => {
         const formattedMessages = data.map((msg, index) => ({
           id: index, // Backend doesn't provide unique ID for individual messages in the JSONB array yet
           text: msg.message,
+          attachment: msg.attachment,
+          fileName: msg.fileName,
           sender: msg.senderId === user.id ? "me" : "them",
           time: new Date(msg.timestamp).toLocaleTimeString([], {
             hour: "2-digit",
@@ -57,6 +78,8 @@ const ChatArea = ({ selectedUser }) => {
         const formattedMessage = {
           id: Date.now(),
           text: newMessage.message,
+          attachment: newMessage.attachment,
+          fileName: newMessage.fileName,
           sender: "them",
           time: new Date(newMessage.timestamp).toLocaleTimeString([], {
             hour: "2-digit",
@@ -104,17 +127,23 @@ const ChatArea = ({ selectedUser }) => {
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() && !attachment) return;
 
     const messageContent = inputText.trim();
+    const currentAttachment = attachment;
+    const currentFileName = attachmentPreview;
     setInputText(""); // Clear input immediately for better UX
+    setAttachment(null);
+    setAttachmentPreview(null);
 
     try {
-      const response = await sendMessage(selectedUser.id, messageContent);
+      const response = await sendMessage(selectedUser.id, messageContent, currentAttachment, currentFileName);
 
       const newMessage = {
         id: Date.now(),
         text: response.data.message,
+        attachment: response.data.attachment,
+        fileName: response.data.fileName,
         sender: "me",
         time: new Date(response.data.timestamp).toLocaleTimeString([], {
           hour: "2-digit",
@@ -142,6 +171,20 @@ const ChatArea = ({ selectedUser }) => {
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Create preview for UI
+      setAttachmentPreview(file.name);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAttachment(event.target.result); // Base64 string
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -245,7 +288,8 @@ const ChatArea = ({ selectedUser }) => {
                     : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
                     }`}
                 >
-                  {msg.text}
+                  {msg.text && <div className="mb-1">{msg.text}</div>}
+                  {renderAttachment(msg.attachment, msg.fileName)}
                 </div>
                 <span className="text-[10px] font-bold text-slate-400 mt-1 px-1 uppercase tracking-wider">
                   {msg.time}
@@ -258,13 +302,30 @@ const ChatArea = ({ selectedUser }) => {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white border-t border-slate-100">
+      <div className="p-4 bg-white border-t border-slate-100 flex flex-col">
+        {attachmentPreview && (
+          <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-slate-100 rounded-lg w-max text-sm text-slate-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            <span className="max-w-[200px] truncate">{attachmentPreview}</span>
+            <button onClick={() => { setAttachment(null); setAttachmentPreview(null); }} className="text-red-500 hover:text-red-600 ml-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+        )}
         <form
           onSubmit={handleSendMessage}
-          className="max-w-4xl mx-auto relative flex items-center gap-2 px-2 py-2 bg-slate-50 border border-slate-100 rounded-2xl focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-500 transition-all"
+          className="max-w-4xl w-full mx-auto relative flex items-center gap-2 px-2 py-2 bg-slate-50 border border-slate-100 rounded-2xl focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-500 transition-all"
         >
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept="image/*,video/*,application/pdf"
+          />
           <button
             type="button"
+            onClick={() => fileInputRef.current?.click()}
             className="p-2 text-slate-400 hover:text-green-500 transition-colors"
           >
             <svg
