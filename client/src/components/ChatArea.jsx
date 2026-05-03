@@ -204,39 +204,6 @@ const ChatArea = ({ selectedUser }) => {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button className="p-2.5 text-slate-400 hover:text-green-500 hover:bg-green-50 rounded-xl transition-all">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-            </svg>
-          </button>
-          <button className="p-2.5 text-slate-400 hover:text-green-500 hover:bg-green-50 rounded-xl transition-all">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polygon points="23 7 16 12 23 17 23 7" />
-              <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-            </svg>
-          </button>
-        </div>
       </div>
 
       {/* Messages Area */}
@@ -283,10 +250,11 @@ const ChatArea = ({ selectedUser }) => {
                 className={`flex flex-col ${msg.sender === "me" ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${msg.sender === "me"
-                    ? "bg-green-500 text-white rounded-br-none"
-                    : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
-                    }`}
+                  className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${
+                    msg.sender === "me"
+                      ? "bg-green-500 text-white rounded-br-none"
+                      : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
+                  }`}
                 >
                   {msg.text && <div className="mb-1">{msg.text}</div>}
                   {renderAttachment(msg.attachment, msg.fileName)}
@@ -305,10 +273,41 @@ const ChatArea = ({ selectedUser }) => {
       <div className="p-4 bg-white border-t border-slate-100 flex flex-col">
         {attachmentPreview && (
           <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-slate-100 rounded-lg w-max text-sm text-slate-600">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+            </svg>
             <span className="max-w-[200px] truncate">{attachmentPreview}</span>
-            <button onClick={() => { setAttachment(null); setAttachmentPreview(null); }} className="text-red-500 hover:text-red-600 ml-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <button
+              onClick={() => {
+                setAttachment(null);
+                setAttachmentPreview(null);
+              }}
+              className="text-red-500 hover:text-red-600 ml-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </button>
           </div>
         )}
