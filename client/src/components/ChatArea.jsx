@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { getMessages, sendMessage } from "../api/messages";
+import { getMessages, sendMessage, deleteMessage } from "../api/messages";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 
@@ -48,7 +48,7 @@ const ChatArea = ({ selectedUser }) => {
 
         // Map backend messages to UI format
         const formattedMessages = data.map((msg, index) => ({
-          id: index, // Backend doesn't provide unique ID for individual messages in the JSONB array yet
+          messageId: msg.messageId || null,
           text: msg.message,
           attachment: msg.attachment,
           fileName: msg.fileName,
@@ -76,7 +76,7 @@ const ChatArea = ({ selectedUser }) => {
       // Only add the message if it's from the currently selected user
       if (newMessage.senderId === selectedUser.id) {
         const formattedMessage = {
-          id: Date.now(),
+          messageId: newMessage.messageId || null,
           text: newMessage.message,
           attachment: newMessage.attachment,
           fileName: newMessage.fileName,
@@ -90,10 +90,16 @@ const ChatArea = ({ selectedUser }) => {
       }
     };
 
+    const handleMessageDeleted = ({ messageId }) => {
+      setMessages((prev) => prev.filter((m) => m.messageId !== messageId));
+    };
+
     socket.on("newMessage", handleNewMessage);
+    socket.on("messageDeleted", handleMessageDeleted);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
+      socket.off("messageDeleted", handleMessageDeleted);
     };
   }, [socket, selectedUser]);
 
@@ -140,7 +146,7 @@ const ChatArea = ({ selectedUser }) => {
       const response = await sendMessage(selectedUser.id, messageContent, currentAttachment, currentFileName);
 
       const newMessage = {
-        id: Date.now(),
+        messageId: response.data.messageId,
         text: response.data.message,
         attachment: response.data.attachment,
         fileName: response.data.fileName,
@@ -155,6 +161,16 @@ const ChatArea = ({ selectedUser }) => {
     } catch (err) {
       console.error("Failed to send message:", err);
       // Optionally show a toast error here
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    if (!messageId) return;
+    try {
+      await deleteMessage(messageId);
+      setMessages((prev) => prev.filter((m) => m.messageId !== messageId));
+    } catch (err) {
+      console.error("Failed to delete message:", err);
     }
   };
 
@@ -246,16 +262,29 @@ const ChatArea = ({ selectedUser }) => {
 
             {messages.map((msg, index) => (
               <div
-                key={msg.id || index}
-                className={`flex flex-col ${msg.sender === "me" ? "items-end" : "items-start"}`}
+                key={msg.messageId || index}
+                className={`group/msg flex flex-col ${msg.sender === "me" ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${
+                  className={`relative max-w-[75%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${
                     msg.sender === "me"
                       ? "bg-green-500 text-white rounded-br-none"
                       : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
                   }`}
                 >
+                  {/* Delete button - only for own messages with a messageId */}
+                  {msg.sender === "me" && msg.messageId && (
+                    <button
+                      onClick={() => handleDeleteMessage(msg.messageId)}
+                      className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
+                      title="Delete message"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </button>
+                  )}
                   {msg.text && <div className="mb-1">{msg.text}</div>}
                   {renderAttachment(msg.attachment, msg.fileName)}
                 </div>
