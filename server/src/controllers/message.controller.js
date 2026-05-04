@@ -25,7 +25,16 @@ export const sendMessage = async (req, res) => {
     );
 
     let conversationId;
+
+    // 2. Insert into the messages table first to get the auto-generated id
+    const messageResult = await pool.query(
+      "INSERT INTO messages (sender_id, receiver_id, message, attachment, file_name) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+      [senderId, receiverId, message, attachment, fileName],
+    );
+
+    const messageId = messageResult.rows[0].id;
     const newMessage = {
+      messageId,
       senderId,
       receiverId,
       message,
@@ -52,12 +61,6 @@ export const sendMessage = async (req, res) => {
       );
       conversationId = newConversation.rows[0].id;
     }
-
-    // 2. Also insert into the messages table for detailed tracking/querying
-    await pool.query(
-      "INSERT INTO messages (sender_id, receiver_id, message, attachment, file_name) VALUES ($1, $2, $3, $4, $5)",
-      [senderId, receiverId, message, attachment, fileName],
-    );
 
     // 3. Socket implementation for real-time
     const receiverSocketId = getReceiverSocketId(receiverId);
@@ -102,6 +105,77 @@ export const getMessages = async (req, res) => {
     res.status(200).json(result.rows[0].messages);
   } catch (error) {
     console.error("Error in getMessages controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const deleteMessage = async (req, res) => {
+  try {
+    const messageId = parseInt(req.params.messageId);
+    const senderId = req.user.id;
+
+    if (!messageId) {
+      return res.status(400).json({ error: "Message ID is required" });
+    }
+
+    // Find the conversation containing this message
+    const convResult = await pool.query(
+      `SELECT id, messages, participants FROM conversations
+       WHERE EXISTS (
+         SELECT 1 FROM jsonb_array_elements(messages) AS m
+         WHERE (m->>'messageId')::int = $1
+       )`,
+      [messageId],
+    );
+
+    if (convResult.rows.length === 0) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    const conversation = convResult.rows[0];
+    const targetMessage = conversation.messages.find(
+      (m) => m.messageId === messageId,
+    );
+
+    if (!targetMessage) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    // Verify the user is the sender of this message
+    if (targetMessage.senderId !== senderId) {
+      return res
+        .status(403)
+        .json({ error: "You can only delete your own messages" });
+    }
+
+    // Remove the message from the JSONB array
+    const updatedMessages = conversation.messages.filter(
+      (m) => m.messageId !== messageId,
+    );
+
+    await pool.query(
+      "UPDATE conversations SET messages = $1::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [JSON.stringify(updatedMessages), conversation.id],
+    );
+
+    // Delete from the messages table by id
+    await pool.query("DELETE FROM messages WHERE id = $1 AND sender_id = $2", [
+      messageId,
+      senderId,
+    ]);
+
+    // Notify the other participant via socket
+    const receiverId = conversation.participants.find((p) => p !== senderId);
+    if (receiverId) {
+      const receiverSocketId = getReceiverSocketId(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("messageDeleted", { messageId });
+      }
+    }
+
+    return res.status(200).json({ message: "Message deleted successfully" });
+  } catch (error) {
+    console.error("Error in deleteMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
