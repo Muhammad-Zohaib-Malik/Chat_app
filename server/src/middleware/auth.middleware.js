@@ -1,11 +1,9 @@
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "super_secret_key";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const verifyAccessToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
   const token = req.cookies?.accessToken;
 
   if (!token) {
