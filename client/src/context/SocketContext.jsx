@@ -26,7 +26,9 @@ export const SocketProvider = ({ children }) => {
         },
       });
       console.log("Socket connection established", newSocket);
-
+      newSocket.on("newMessage", (data) => {
+        console.log("📩 New message received via socket:", data);
+      });
 
 
       setSocket(newSocket);
